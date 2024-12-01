@@ -1,7 +1,7 @@
 # OpenStack-Bobcat-Manual-Installation-Guide
 
 
-> [!NOTE] **Description:**
+> [!NOTE]
 > **This guide provide step-by-step install OpenStack for minimum lab environment with muti-nodes** 
 
 Openstack version: **OpenStack 2023.2 Bobcat**
@@ -97,7 +97,7 @@ server NTP_SERVER iburst
 ```
 For `NTP_SERVER`, you can get from this [link]([pool.ntp.org: NTP Servers in Vietnam, vn.pool.ntp.org](https://www.ntppool.org/zone/vn)), or you can leave it as default
 
-> [!NOTE] Note
+> [!NOTE]
 > By default, the controller node synchronizes the time via a pool of public servers. However, you can optionally configure alternative servers such as those provided by your organization. 
 
 - To enable other nodes to connect to the chrony daemon on the controller node, add this key to the same `chrony.conf` file mentioned above:
@@ -458,7 +458,7 @@ keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 ```
 
-> [!NOTE] Note
+> [!NOTE]
 > The `--keystone-user` and `--keystone-group` flags are used to specify the operating system’s user/group that will be used to run keystone. These are provided to allow running keystone under another operating system user/group. In the example below, we call the user & group `keystone`.
 
 - Bootstrap the Identity service:
@@ -709,7 +709,7 @@ openstack service create --name placement \
 
 - Create the Placement API service endpoints:
 
-> [!NOTE] Note
+> [!NOTE] 
 > Depending on your environment, You might want to create the URL for the endpoint will vary by port (possibly 8780 instead of 8778, or no port at all) and hostname. You are responsible for determining the correct URL.
 
 ```bash
@@ -1113,7 +1113,7 @@ systemctl enable libvirtd.service openstack-nova-compute.service
 systemctl start libvirtd.service openstack-nova-compute.service
 ```
 
-> [!NOTE] Note
+> [!NOTE] 
 > If the `nova-compute` service fails to start, check `/var/log/nova/nova-compute.log`. The error message `AMQP server on controller:5672 is unreachable` likely indicates that the firewall on the controller node is preventing access to port 5672. Configure the firewall to open port 5672 on the controller node and restart `nova-compute` service on the compute node.
 
 
@@ -1132,7 +1132,7 @@ openstack compute service list --service nova-compute
 su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
 ```
 
-> [!NOTE] Note
+> [!NOTE] 
 > When you add new compute nodes, you must run `nova-manage cell_v2 discover_hosts` on the controller node to register those new compute nodes. Alternatively, you can set an appropriate interval in `/etc/nova/nova.conf`
 ```
 [scheduler]
@@ -1686,10 +1686,20 @@ TIME_ZONE = "TIME_ZONE"
 ```
 Replace `TIME_ZONE` with an appropriate time zone identifier. For more information, see the [list of time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 
-- Add the following line to `/etc/httpd/conf.d/openstack-dashboard.conf` if not included.
+Edit file `/etc/httpd/conf.d/openstack-dashboard.conf`
+- Add this line at the top file
 ```
 WSGIApplicationGroup %{GLOBAL}
+```
 
+- Change `WSGIScriptAlias /dashboard /usr/share/openstack-dashboard/openstack_dashboard/wsgi/django.wsgi` to
+```
+WSGIScriptAlias /dashboard /usr/share/openstack-dashboard/openstack_dashboard/wsgi.py
+```
+
+- Change `<Directory /usr/share/openstack-dashboard/openstack_dashboard/wsgi>` to
+```
+<Directory /usr/share/openstack-dashboard/openstack_dashboard>
 ```
 
 - Create a redirect page
@@ -1712,22 +1722,6 @@ EOF
 ```bash
 systemctl restart httpd.service memcached.service
 ```
-
-
-
-Solved problem with horizon centos
-```bash
-1. in </etc/httpd/conf.d/openstack-dashboard.conf>  
-   change "WSGIScriptAlias /dashboard /usr/share/openstack-dashboard/openstack_dashboard/wsgi/django.wsgi"  
-   to "WSGIScriptAlias /dashboard /usr/share/openstack-dashboard/openstack_dashboard/wsgi.py"  
-   because there is no django.wsgi, but wsgi.py on your server.
-
-2. in </etc/httpd/conf.d/openstack-dashboard.conf>  
-   change "<Directory /usr/share/openstack-dashboard/openstack_dashboard/wsgi>"  
-   to "<Directory /usr/share/openstack-dashboard/openstack_dashboard>"  
-   because of the same reason to 1
-```
-
 
 #### Cinder Installation (Block Storage service)
 
